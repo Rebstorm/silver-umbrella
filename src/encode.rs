@@ -1,7 +1,5 @@
 use base64::Engine;
-use hex::decode;
 use serde::{Deserialize, Serialize};
-use serde::de::Unexpected::Str;
 
 #[cfg(test)]
 mod tests {
@@ -55,11 +53,11 @@ mod tests {
 
     #[test]
     fn test_decrypt_xor() {
-        let encoded = "hex_encoded_string";  // This should be an actual hex-encoded string
+        let encoded = "28b78c92032baa34fcdfc42c47ba81";  // This should be an actual hex-encoded string
         let method = EncryptionMethod::from_str("hex decoded, encrypted with XOR, hex encoded again. key: secret");
         let decoded = method.decrypt(encoded);
 
-        assert_eq!(decoded, "expected_hex_encoded_output");  // Adjust according to actual expected output
+        assert_eq!(decoded, "5bd2efe0665fd9519fada15834dfe2");  // Adjust according to actual expected output
     }
 
 }
