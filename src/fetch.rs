@@ -7,11 +7,13 @@ pub async fn fetch_next_challenge(client: &Client, base_url: &str, prefix_path: 
     // Decrypt the path first
     let decrypted_path = method.decrypt(path);
 
+    /*
     let iter = utf8_percent_encode(&decrypted_path, NON_ALPHANUMERIC);
     let encoded: String = iter.collect();
+     */
 
     // Perform the GET request to the decrypted path
-    let url = format!("{}{}{}", base_url, prefix_path, encoded);
+    let url = format!("{}{}{}", base_url, prefix_path, decrypted_path);
     println!("[FETCH] URL for next task: {}", url);
 
     let response = client.get(&url).send().await?;

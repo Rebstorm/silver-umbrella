@@ -1,5 +1,5 @@
-use base64::Engine;
 use serde::{Deserialize, Serialize};
+use rmp_serde;
 
 #[cfg(test)]
 mod tests {
@@ -60,6 +60,15 @@ mod tests {
         assert_eq!(decoded, "5bd2efe0665fd9519fada15834dfe2");  // Adjust according to actual expected output
     }
 
+    #[test]
+    fn test_decrypt_scrambled() {
+        let encoded = "ef48f1a4a89bb295deba12db70bde81";  // Placeholder, replace with actual scrambled data
+        let method = EncryptionMethod::from_str("scrambled! original positions as base64 encoded messagepack: 3AAfFAcPFxYbAhgRAwAICgweBQEEDhwVGgYQEg0JGRMdCw==");
+        let decoded = method.decrypt(encoded);
+
+        assert_eq!(decoded, "9da8e5dfbbb120b4ba7ee1f84d21a89");  // Adjust expected output
+    }
+
 }
 
 
@@ -82,11 +91,20 @@ pub enum EncryptionMethod {
     SwappedPairs,
     AsciiManipulation(i32),
     XOR(String),
-    Unencrypted
+    Unencrypted,
+    Scrambled(Vec<usize>)
 }
 
 impl EncryptionMethod {
     pub fn from_str(method: &str) -> Self {
+
+        // Base64 Scrambled!
+        if method.starts_with("scrambled!") {
+            let data = method.trim_start_matches("scrambled! original positions as base64 encoded messagepack: ");
+            let decoded_data = base64::decode(data).unwrap_or_default();
+            let positions: Vec<usize> = rmp_serde::from_read_ref(&decoded_data).unwrap_or_default();
+            return EncryptionMethod::Scrambled(positions);
+        }
 
         // The weird bit shift challenge.
         if method.starts_with("added ") && method.ends_with(" to ASCII value of each character") {
@@ -150,8 +168,6 @@ impl EncryptionMethod {
             },
 
             EncryptionMethod::XOR(key) => {
-
-                println!("{}" , key);
                 // Step 1: Hex decode
                 let bytes = hex::decode(encrypted).unwrap_or_default();  // Decode hex to bytes
 
@@ -166,6 +182,17 @@ impl EncryptionMethod {
 
                 // Step 3: Hex encode the result
                 return hex::encode(decrypted_bytes)  // Re-encode to hex
+            },
+
+            EncryptionMethod::Scrambled(positions) => {
+                if positions.len() != encrypted.len() {
+                    return "Error: Length mismatch".to_string();
+                }
+                let mut result = vec![' '; encrypted.len()];  // Prepare a vector with spaces
+                for (pos, &ch_index) in positions.iter().enumerate() {
+                    result[ch_index] = encrypted.chars().nth(pos).unwrap_or_default();  // Place characters at their indexed positions
+                }
+                result.into_iter().collect()
             },
         }
     }

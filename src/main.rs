@@ -44,5 +44,12 @@ async fn main() -> Result<(), Error> {
     let complex_hex = fetch::fetch_next_challenge(&client, base_url, "task_", ascii_shift_to_decrypt.get(1).unwrap(), ascii_shift_question).await?;
     println!("[Complex: Hex->XOR->HEX w. key {}] Next response after decryption: {}", "secret", serde_json::to_string_pretty(&complex_hex).unwrap());
 
+    // Base64 Scrambled & MessagePack
+    let base64_scrambled_question = EncryptionMethod::from_str(&complex_hex.encryption_method);
+    let base64_scrambled_to_decrypt: Vec<&str> = complex_hex.encrypted_path.split("task_").collect();
+    let base64_scrambled = fetch::fetch_next_challenge(&client, base_url, "task_", base64_scrambled_to_decrypt.get(1).unwrap(), base64_scrambled_question).await?;
+    println!("[Base64: MessagePack & Scrambled] {}", serde_json::to_string_pretty(&base64_scrambled).unwrap());
+
+
     Ok(())
 }
